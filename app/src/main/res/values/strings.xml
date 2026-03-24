@@ -13,5 +13,12 @@
     <string name="error_select_input_first">Select an input gzip file first.</string>
     <string name="error_output_filename_required">Enter an output filename.</string>
     <string name="error_output_filename_invalid">Output filename contains invalid characters.</string>
-    <string name="extract_ready_message">Ready to extract.</string>
+    <string name="error_select_output_destination">Select an output destination first.</string>
+    <string name="extract_in_progress">Extracting…</string>
+    <string name="output_destination_selected">Output destination: %1$s</string>
+    <string name="error_extract_invalid_gzip">Extraction failed: input is not valid gzip data.</string>
+    <string name="error_extract_write_failed">Extraction failed while writing output.</string>
+    <string name="error_extract_permission_or_canceled">Extraction failed: destination/input is unavailable, canceled, or permission was denied.</string>
+    <string name="error_extract_generic">Extraction failed: %1$s</string>
+    <string name="extract_success_message">Extracted %1$s (%2$s).</string>
 </resources>

@@ -12,10 +12,18 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import java.io.FileNotFoundException
+import java.io.IOException
+import java.text.DecimalFormat
+import java.util.Locale
+import java.util.zip.GZIPInputStream
+import java.util.zip.ZipException
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     private var selectedInputUri: Uri? = null
+    private var selectedOutputUri: Uri? = null
+    private var isExtracting = false
 
     private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) {
@@ -24,6 +32,34 @@ class MainActivity : AppCompatActivity() {
 
         validateAndSetInputFile(uri)
     }
+
+    private val createDocumentLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("*/*")) { uri ->
+            if (uri == null) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.error_extract_permission_or_canceled),
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@registerForActivityResult
+            }
+
+            selectedOutputUri = uri
+            try {
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                )
+            } catch (_: SecurityException) {
+                Toast.makeText(
+                    this,
+                    getString(R.string.warning_persist_permission_unavailable),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+
+            updateOutputDestinationLabel(uri)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,11 +71,38 @@ class MainActivity : AppCompatActivity() {
             openDocumentLauncher.launch(arrayOf("*/*"))
         }
 
+        val selectOutputDestinationButton = findViewById<MaterialButton>(R.id.selectOutputDestinationButton)
+        selectOutputDestinationButton.setOnClickListener {
+            if (validateOutputFilenameBeforeExtraction()) {
+                val outputName =
+                    findViewById<TextInputEditText>(R.id.outputFilenameEditText).text?.toString()?.trim().orEmpty()
+                createDocumentLauncher.launch(outputName)
+            }
+        }
+
         val extractButton = findViewById<MaterialButton>(R.id.extractButton)
         extractButton.setOnClickListener {
-            if (validateOutputFilenameBeforeExtraction()) {
-                Toast.makeText(this, getString(R.string.extract_ready_message), Toast.LENGTH_SHORT).show()
+            if (isExtracting) {
+                return@setOnClickListener
             }
+
+            if (!validateOutputFilenameBeforeExtraction()) {
+                return@setOnClickListener
+            }
+
+            val inputUri = selectedInputUri
+            if (inputUri == null) {
+                Toast.makeText(this, getString(R.string.error_select_input_first), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val outputUri = selectedOutputUri
+            if (outputUri == null) {
+                Toast.makeText(this, getString(R.string.error_select_output_destination), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            extractGzipOffMainThread(inputUri, outputUri)
         }
     }
 
@@ -84,11 +147,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun validateOutputFilenameBeforeExtraction(): Boolean {
-        if (selectedInputUri == null) {
-            Toast.makeText(this, getString(R.string.error_select_input_first), Toast.LENGTH_SHORT).show()
-            return false
-        }
-
         val outputFilenameLayout = findViewById<TextInputLayout>(R.id.outputFilenameLayout)
         val outputFilenameEditText = findViewById<TextInputEditText>(R.id.outputFilenameEditText)
         val outputName = outputFilenameEditText.text?.toString()?.trim().orEmpty()
@@ -192,10 +250,129 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateOutputDestinationLabel(uri: Uri) {
+        val outputDestinationLabel = findViewById<android.widget.TextView>(R.id.outputDestinationLabel)
+        val outputName = resolveDisplayName(uri) ?: uri.lastPathSegment ?: uri.toString()
+        outputDestinationLabel.text = getString(R.string.output_destination_selected, outputName)
+    }
+
+    private fun extractGzipOffMainThread(inputUri: Uri, outputUri: Uri) {
+        isExtracting = true
+        setUiEnabled(false)
+        Toast.makeText(this, getString(R.string.extract_in_progress), Toast.LENGTH_SHORT).show()
+
+        thread {
+            val result = extractGzip(inputUri, outputUri)
+
+            runOnUiThread {
+                isExtracting = false
+                setUiEnabled(true)
+
+                when (result) {
+                    is ExtractionResult.Success -> {
+                        val outputName = resolveDisplayName(outputUri) ?: outputUri.lastPathSegment ?: outputUri.toString()
+                        val sizeText = formatBytes(result.outputBytes)
+                        Toast.makeText(
+                            this,
+                            getString(R.string.extract_success_message, outputName, sizeText),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    is ExtractionResult.InvalidGzip -> {
+                        Toast.makeText(this, getString(R.string.error_extract_invalid_gzip), Toast.LENGTH_LONG).show()
+                    }
+
+                    is ExtractionResult.WriteFailure -> {
+                        Toast.makeText(this, getString(R.string.error_extract_write_failed), Toast.LENGTH_LONG).show()
+                    }
+
+                    is ExtractionResult.PermissionOrCanceled -> {
+                        Toast.makeText(
+                            this,
+                            getString(R.string.error_extract_permission_or_canceled),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+                    is ExtractionResult.GenericFailure -> {
+                        Toast.makeText(
+                            this,
+                            getString(R.string.error_extract_generic, result.message),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun extractGzip(inputUri: Uri, outputUri: Uri): ExtractionResult {
+        return try {
+            contentResolver.openInputStream(inputUri)?.use { rawInput ->
+                GZIPInputStream(rawInput).use { gzipInput ->
+                    contentResolver.openOutputStream(outputUri, "w")?.use { output ->
+                        val buffer = ByteArray(BUFFER_SIZE)
+                        var totalBytes = 0L
+                        while (true) {
+                            val count = gzipInput.read(buffer)
+                            if (count <= 0) break
+                            output.write(buffer, 0, count)
+                            totalBytes += count
+                        }
+                        output.flush()
+                        ExtractionResult.Success(totalBytes)
+                    } ?: return ExtractionResult.PermissionOrCanceled
+                }
+            } ?: ExtractionResult.PermissionOrCanceled
+        } catch (_: ZipException) {
+            ExtractionResult.InvalidGzip
+        } catch (_: SecurityException) {
+            ExtractionResult.PermissionOrCanceled
+        } catch (_: FileNotFoundException) {
+            ExtractionResult.PermissionOrCanceled
+        } catch (_: IOException) {
+            ExtractionResult.WriteFailure
+        } catch (exception: Exception) {
+            ExtractionResult.GenericFailure(exception.message ?: "unknown error")
+        }
+    }
+
+    private fun setUiEnabled(enabled: Boolean) {
+        findViewById<MaterialButton>(R.id.selectInputButton).isEnabled = enabled
+        findViewById<MaterialButton>(R.id.selectOutputDestinationButton).isEnabled = enabled
+        findViewById<MaterialButton>(R.id.extractButton).isEnabled = enabled
+        findViewById<TextInputEditText>(R.id.outputFilenameEditText).isEnabled = enabled
+    }
+
+    private fun formatBytes(bytes: Long): String {
+        if (bytes < 1024) return "$bytes B"
+
+        val units = arrayOf("KB", "MB", "GB", "TB")
+        var value = bytes.toDouble()
+        var unitIndex = -1
+        while (value >= 1024 && unitIndex < units.lastIndex) {
+            value /= 1024
+            unitIndex++
+        }
+
+        val format = DecimalFormat("#,##0.#")
+        return String.format(Locale.US, "%s %s", format.format(value), units[unitIndex])
+    }
+
+    private sealed class ExtractionResult {
+        data class Success(val outputBytes: Long) : ExtractionResult()
+        data object InvalidGzip : ExtractionResult()
+        data object WriteFailure : ExtractionResult()
+        data object PermissionOrCanceled : ExtractionResult()
+        data class GenericFailure(val message: String) : ExtractionResult()
+    }
+
     private companion object {
         const val GZIP_MAGIC_FIRST_BYTE = 0x1F
         const val GZIP_MAGIC_SECOND_BYTE = 0x8B
         const val GZIP_EXTENSION = ".gz"
         const val DEFAULT_OUTPUT_FILENAME = "output.out"
+        const val BUFFER_SIZE = 8 * 1024
     }
 }
