@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
 
         val selectInputButton = findViewById<MaterialButton>(R.id.selectInputButton)
         selectInputButton.setOnClickListener {
+            Toast.makeText(this, getString(R.string.picker_sort_toast), Toast.LENGTH_SHORT).show()
             // Use SAF with */* so cloud/document providers like Google Drive are available.
             openDocumentLauncher.launch(arrayOf("*/*"))
         }
