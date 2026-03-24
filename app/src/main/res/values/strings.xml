@@ -4,10 +4,14 @@
     <string name="validating_selected_file">Validating selected file…</string>
     <string name="selected_input_file">Input: %1$s</string>
     <string name="suggested_output_filename">Suggested output filename</string>
-    <string name="default_output_filename">output.txt</string>
+    <string name="default_output_filename">output.out</string>
     <string name="output_destination_default">Output destination: Downloads</string>
     <string name="select_output_destination">Select output destination</string>
     <string name="extract">Extract</string>
     <string name="error_not_gzip_file">The selected file is not gzip-compressed (missing header bytes 1F 8B).</string>
     <string name="warning_persist_permission_unavailable">Could not keep long-term access permission for this file.</string>
+    <string name="error_select_input_first">Select an input gzip file first.</string>
+    <string name="error_output_filename_required">Enter an output filename.</string>
+    <string name="error_output_filename_invalid">Output filename contains invalid characters.</string>
+    <string name="extract_ready_message">Ready to extract.</string>
 </resources>
