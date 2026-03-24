@@ -104,6 +104,75 @@ class MainActivity : AppCompatActivity() {
 
             extractGzipOffMainThread(inputUri, outputUri)
         }
+
+        handleIncomingIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIncomingIntent(intent)
+    }
+
+    private fun handleIncomingIntent(incomingIntent: Intent?) {
+        if (incomingIntent?.action != Intent.ACTION_VIEW) {
+            return
+        }
+
+        val incomingUri = incomingIntent.data
+        if (incomingUri == null) {
+            Toast.makeText(this, getString(R.string.error_opened_uri_missing), Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (!isSupportedViewUri(incomingUri)) {
+            Toast.makeText(this, getString(R.string.error_opened_uri_unsupported_scheme), Toast.LENGTH_LONG).show()
+            return
+        }
+
+        if (!hasReadablePermission(incomingUri)) {
+            Toast.makeText(this, getString(R.string.error_opened_uri_permission_guidance), Toast.LENGTH_LONG).show()
+            return
+        }
+
+        validateAndSetInputFile(incomingUri)
+    }
+
+    private fun isSupportedViewUri(uri: Uri): Boolean {
+        return uri.scheme == CONTENT_SCHEME || uri.scheme == FILE_SCHEME
+    }
+
+    private fun hasReadablePermission(uri: Uri): Boolean {
+        if (uri.scheme == FILE_SCHEME) {
+            return canOpenInputStream(uri)
+        }
+
+        val hasTransientGrant =
+            checkUriPermission(
+                uri,
+                android.os.Process.myPid(),
+                android.os.Process.myUid(),
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+
+        if (hasTransientGrant) {
+            return true
+        }
+
+        return canOpenInputStream(uri)
+    }
+
+    private fun canOpenInputStream(uri: Uri): Boolean {
+        return try {
+            contentResolver.openInputStream(uri)?.close()
+            true
+        } catch (_: SecurityException) {
+            false
+        } catch (_: FileNotFoundException) {
+            false
+        } catch (_: IllegalArgumentException) {
+            false
+        }
     }
 
     private fun validateAndSetInputFile(uri: Uri) {
@@ -374,5 +443,7 @@ class MainActivity : AppCompatActivity() {
         const val GZIP_EXTENSION = ".gz"
         const val DEFAULT_OUTPUT_FILENAME = "output.out"
         const val BUFFER_SIZE = 8 * 1024
+        const val CONTENT_SCHEME = "content"
+        const val FILE_SCHEME = "file"
     }
 }

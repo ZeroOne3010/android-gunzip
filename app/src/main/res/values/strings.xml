@@ -14,6 +14,9 @@
     <string name="error_output_filename_required">Enter an output filename.</string>
     <string name="error_output_filename_invalid">Output filename contains invalid characters.</string>
     <string name="error_select_output_destination">Select an output destination first.</string>
+    <string name="error_opened_uri_missing">Could not open shared file: no file URI was provided.</string>
+    <string name="error_opened_uri_unsupported_scheme">This shared link type is not supported. Share a file URI/content URI instead.</string>
+    <string name="error_opened_uri_permission_guidance">Cannot read the shared file. Re-share it with access permission, or choose it with "Select input file".</string>
     <string name="extract_in_progress">Extracting…</string>
     <string name="output_destination_selected">Output destination: %1$s</string>
     <string name="error_extract_invalid_gzip">Extraction failed: input is not valid gzip data.</string>
