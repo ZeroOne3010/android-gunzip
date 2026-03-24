@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Android Gunzip</string>
+    <string name="select_input_file">Select input file</string>
+    <string name="suggested_output_filename">Suggested output filename</string>
+    <string name="default_output_filename">output.txt</string>
+    <string name="output_destination_default">Output destination: Downloads</string>
+    <string name="select_output_destination">Select output destination</string>
+    <string name="extract">Extract</string>
+</resources>
