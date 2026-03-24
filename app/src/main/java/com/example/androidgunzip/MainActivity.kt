@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
+import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     private var selectedInputUri: Uri? = null
@@ -19,27 +20,7 @@ class MainActivity : AppCompatActivity() {
             return@registerForActivityResult
         }
 
-        if (!isGzipUri(uri)) {
-            selectedInputUri = null
-            Toast.makeText(this, getString(R.string.error_not_gzip_file), Toast.LENGTH_LONG).show()
-            return@registerForActivityResult
-        }
-
-        selectedInputUri = uri
-        try {
-            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        } catch (_: SecurityException) {
-            Toast.makeText(this, getString(R.string.warning_persist_permission_unavailable), Toast.LENGTH_SHORT).show()
-        }
-
-        val inputButton = findViewById<MaterialButton>(R.id.selectInputButton)
-        inputButton.text = getString(R.string.selected_input_file, getDisplayName(uri) ?: uri.lastPathSegment ?: uri.toString())
-
-        val outputFilenameEditText = findViewById<TextInputEditText>(R.id.outputFilenameEditText)
-        val suggestedOutputName = suggestOutputFilename(getDisplayName(uri))
-        if (!suggestedOutputName.isNullOrBlank()) {
-            outputFilenameEditText.setText(suggestedOutputName)
-        }
+        validateAndSetInputFile(uri)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +31,46 @@ class MainActivity : AppCompatActivity() {
         selectInputButton.setOnClickListener {
             // Use SAF with */* so cloud/document providers like Google Drive are available.
             openDocumentLauncher.launch(arrayOf("*/*"))
+        }
+    }
+
+    private fun validateAndSetInputFile(uri: Uri) {
+        val inputButton = findViewById<MaterialButton>(R.id.selectInputButton)
+        inputButton.isEnabled = false
+        inputButton.text = getString(R.string.validating_selected_file)
+
+        thread {
+            val displayName = getDisplayName(uri)
+            val isGzip = isGzipUri(uri)
+
+            runOnUiThread {
+                inputButton.isEnabled = true
+
+                if (!isGzip) {
+                    selectedInputUri = null
+                    inputButton.text = getString(R.string.select_input_file)
+                    Toast.makeText(this, getString(R.string.error_not_gzip_file), Toast.LENGTH_LONG).show()
+                    return@runOnUiThread
+                }
+
+                selectedInputUri = uri
+                try {
+                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (_: SecurityException) {
+                    Toast.makeText(this, getString(R.string.warning_persist_permission_unavailable), Toast.LENGTH_SHORT).show()
+                }
+
+                inputButton.text = getString(
+                    R.string.selected_input_file,
+                    displayName ?: uri.lastPathSegment ?: uri.toString()
+                )
+
+                val outputFilenameEditText = findViewById<TextInputEditText>(R.id.outputFilenameEditText)
+                val suggestedOutputName = suggestOutputFilename(displayName)
+                if (!suggestedOutputName.isNullOrBlank()) {
+                    outputFilenameEditText.setText(suggestedOutputName)
+                }
+            }
         }
     }
 
