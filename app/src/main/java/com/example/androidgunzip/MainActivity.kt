@@ -142,7 +142,27 @@ class MainActivity : AppCompatActivity() {
 
         return nameFromDocumentContract
             ?: queryDisplayName(uri, OpenableColumns.DISPLAY_NAME)
-            ?: uri.lastPathSegment
+            ?: sanitizeUriFallbackName(uri.lastPathSegment)
+    }
+
+    private fun sanitizeUriFallbackName(lastPathSegment: String?): String? {
+        if (lastPathSegment.isNullOrBlank()) {
+            return null
+        }
+
+        val basename = Uri.decode(lastPathSegment)
+            .substringAfterLast('/')
+            .substringAfterLast(':')
+            .substringAfterLast('\\')
+            .trim()
+
+        if (basename.isBlank()) {
+            return null
+        }
+
+        val forbiddenChars = setOf('/', '\\', ':', '*', '?', '"', '<', '>', '|')
+        val sanitized = basename.filter { it.code >= 0x20 && it !in forbiddenChars }.trim()
+        return sanitized.ifBlank { null }
     }
 
     private fun queryDisplayName(uri: Uri, columnName: String): String? {
