@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private var selectedInputUri: Uri? = null
     private var selectedDestinationTreeUri: Uri? = null
     private var isExtracting = false
+    private val destinationPrefs by lazy { getSharedPreferences(PREFS_NAME, MODE_PRIVATE) }
 
     private val openDocumentLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) {
@@ -63,6 +64,7 @@ class MainActivity : AppCompatActivity() {
             } catch (_: SecurityException) {
                 Toast.makeText(this, getString(R.string.warning_persist_permission_unavailable), Toast.LENGTH_SHORT).show()
             }
+            persistDestinationTreeUri(treeUri)
 
             Toast.makeText(this, getString(R.string.destination_tree_selected), Toast.LENGTH_SHORT).show()
             refreshDestinationLabels()
@@ -71,6 +73,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        restorePersistedDestinationTreeUri()
 
         val outputFilenameEditText = findViewById<TextInputEditText>(R.id.outputFilenameEditText)
         outputFilenameEditText.addTextChangedListener {
@@ -128,6 +131,23 @@ class MainActivity : AppCompatActivity() {
             selectedDestinationTreeUri?.let { putExtra(DocumentsContract.EXTRA_INITIAL_URI, it) }
         }
         openDocumentTreeLauncher.launch(intent)
+    }
+
+    private fun restorePersistedDestinationTreeUri() {
+        val persisted = destinationPrefs.getString(KEY_DESTINATION_TREE_URI, null) ?: return
+        val uri = runCatching { Uri.parse(persisted) }.getOrNull() ?: return
+        val hasPersistedAccess = contentResolver.persistedUriPermissions.any { permission ->
+            permission.uri == uri && permission.isWritePermission
+        }
+        if (hasPersistedAccess) {
+            selectedDestinationTreeUri = uri
+        } else {
+            destinationPrefs.edit().remove(KEY_DESTINATION_TREE_URI).apply()
+        }
+    }
+
+    private fun persistDestinationTreeUri(uri: Uri) {
+        destinationPrefs.edit().putString(KEY_DESTINATION_TREE_URI, uri.toString()).apply()
     }
 
     private fun showExtractionConfirmation(inputUri: Uri, outputName: String, destinationSummary: String) {
@@ -450,12 +470,19 @@ class MainActivity : AppCompatActivity() {
         val outputResolvedLabel = findViewById<TextView>(R.id.outputResolvedLabel)
         val outputName = resolveRequestedOutputName().ifBlank { DEFAULT_OUTPUT_FILENAME }
 
-        val destinationLabel = selectedDestinationTreeUri?.toString()
-            ?: getString(R.string.output_destination_default_label)
+        val destinationLabel = selectedDestinationTreeUri?.toString() ?: getDefaultDestinationLabel()
         outputDestinationLabel.text = getString(R.string.output_destination_selected, destinationLabel)
 
         val resolved = overrideResolvedDestination ?: describePlannedDestination(outputName)
         outputResolvedLabel.text = getString(R.string.output_resolved_preview, resolved)
+    }
+
+    private fun getDefaultDestinationLabel(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            getString(R.string.output_destination_default_label)
+        } else {
+            getString(R.string.output_destination_app_specific_label)
+        }
     }
 
     private fun describePlannedDestination(outputName: String): String {
@@ -622,5 +649,7 @@ class MainActivity : AppCompatActivity() {
         const val CONTENT_SCHEME = "content"
         const val FILE_SCHEME = "file"
         const val OCTET_STREAM_MIME = "application/octet-stream"
+        const val PREFS_NAME = "destination_preferences"
+        const val KEY_DESTINATION_TREE_URI = "destination_tree_uri"
     }
 }

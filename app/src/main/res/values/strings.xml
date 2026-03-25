@@ -7,6 +7,7 @@
     <string name="default_output_filename">output.out</string>
     <string name="output_destination_default">Destination: Public Downloads (default)</string>
     <string name="output_destination_default_label">Public Downloads (default)</string>
+    <string name="output_destination_app_specific_label">App-specific Downloads (default)</string>
     <string name="select_output_destination">Change destination</string>
     <string name="extract">Extract</string>
     <string name="picker_sort_hint">Tip: Sorting is handled by your file provider (Files/Drive). Use the picker sort menu for Name / Last modified.</string>
