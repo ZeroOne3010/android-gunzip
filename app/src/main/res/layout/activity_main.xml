@@ -52,6 +52,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/outputFilenameLayout" />
 
+    <TextView
+        android:id="@+id/outputResolvedLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/output_resolved_preview_placeholder"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/outputDestinationLabel" />
+
     <com.google.android.material.button.MaterialButton
         android:id="@+id/selectOutputDestinationButton"
         style="@style/Widget.Material3.Button.OutlinedButton"
@@ -61,7 +71,7 @@
         android:text="@string/select_output_destination"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/outputDestinationLabel" />
+        app:layout_constraintTop_toBottomOf="@id/outputResolvedLabel" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/extractButton"
