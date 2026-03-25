@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">Gunzip</string>
+    <string name="main_title">Gunzip utility</string>
+    <string name="main_subtitle">Pick a .gz file, choose destination, and extract.</string>
     <string name="select_input_file">Select input file</string>
     <string name="validating_selected_file">Validating selected file…</string>
     <string name="selected_input_file">Input: %1$s</string>
