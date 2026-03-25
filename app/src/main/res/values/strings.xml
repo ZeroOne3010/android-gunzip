@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Android Gunzip</string>
+    <string name="app_name">Gunzip</string>
     <string name="select_input_file">Select input file</string>
     <string name="validating_selected_file">Validating selected file…</string>
     <string name="selected_input_file">Input: %1$s</string>

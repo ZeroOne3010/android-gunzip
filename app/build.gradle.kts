@@ -33,6 +33,12 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    sourceSets {
+        getByName("main") {
+            res.srcDir(layout.buildDirectory.dir("generated/res/copiedIcon"))
+        }
+    }
 }
 
 dependencies {
@@ -40,4 +46,22 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+}
+
+val copyLauncherIcon by tasks.registering(Copy::class) {
+    from(rootProject.file("gunzip-icon.png"))
+    into(layout.buildDirectory.dir("generated/res/copiedIcon/drawable"))
+    rename { "gunzip_icon.png" }
+}
+
+tasks.named("preBuild") {
+    dependsOn(copyLauncherIcon)
+}
+
+androidComponents {
+    onVariants(selector().withBuildType("debug")) { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("gunzip.apk")
+        }
+    }
 }
