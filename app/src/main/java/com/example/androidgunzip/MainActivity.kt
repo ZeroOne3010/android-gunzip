@@ -94,7 +94,6 @@ class MainActivity : AppCompatActivity() {
 
         val selectInputButton = findViewById<MaterialButton>(R.id.selectInputButton)
         selectInputButton.setOnClickListener {
-            Toast.makeText(this, getString(R.string.picker_sort_toast), Toast.LENGTH_SHORT).show()
             openDocumentLauncher.launch(arrayOf("*/*"))
         }
 
