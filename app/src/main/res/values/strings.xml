@@ -14,8 +14,6 @@
     <string name="reset_output_destination">Use Downloads</string>
     <string name="destination_tree_reset_to_default">Destination reset to Downloads default.</string>
     <string name="extract">Extract</string>
-    <string name="picker_sort_hint">Tip: Sorting is handled by your file provider (Files/Drive). Use the picker sort menu for Name / Last modified.</string>
-    <string name="picker_sort_toast">Use picker sort menu for Name / Last modified.</string>
     <string name="error_not_gzip_file">The selected file is not gzip-compressed (missing header bytes 1F 8B).</string>
     <string name="warning_persist_permission_unavailable">Could not keep long-term access permission for this file.</string>
     <string name="error_select_input_first">Select an input gzip file first.</string>
