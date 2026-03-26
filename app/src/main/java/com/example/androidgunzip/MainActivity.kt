@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
                 return@registerForActivityResult
             }
 
-            if (isDownloadsRootTreeUri(treeUri)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && isDownloadsRootTreeUri(treeUri)) {
                 clearCustomDestinationSelection()
                 Toast.makeText(this, getString(R.string.destination_tree_downloads_root_blocked_hint), Toast.LENGTH_LONG).show()
                 refreshDestinationLabels()
