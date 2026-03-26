@@ -47,13 +47,25 @@ class MainActivity : AppCompatActivity() {
     private val openDocumentTreeLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode != Activity.RESULT_OK) {
-                Toast.makeText(this, getString(R.string.destination_tree_selection_canceled), Toast.LENGTH_SHORT).show()
+                val canceledMessage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    getString(R.string.destination_tree_selection_canceled_downloads_hint)
+                } else {
+                    getString(R.string.destination_tree_selection_canceled)
+                }
+                Toast.makeText(this, canceledMessage, Toast.LENGTH_LONG).show()
                 return@registerForActivityResult
             }
 
             val treeUri = result.data?.data
             if (treeUri == null) {
                 Toast.makeText(this, getString(R.string.error_destination_tree_open_failed), Toast.LENGTH_SHORT).show()
+                return@registerForActivityResult
+            }
+
+            if (isDownloadsRootTreeUri(treeUri)) {
+                clearCustomDestinationSelection()
+                Toast.makeText(this, getString(R.string.destination_tree_downloads_root_blocked_hint), Toast.LENGTH_LONG).show()
+                refreshDestinationLabels()
                 return@registerForActivityResult
             }
 
@@ -91,6 +103,13 @@ class MainActivity : AppCompatActivity() {
             openCustomDestinationPicker()
         }
 
+        val resetOutputDestinationButton = findViewById<MaterialButton>(R.id.resetOutputDestinationButton)
+        resetOutputDestinationButton.setOnClickListener {
+            clearCustomDestinationSelection()
+            Toast.makeText(this, getString(R.string.destination_tree_reset_to_default), Toast.LENGTH_SHORT).show()
+            refreshDestinationLabels()
+        }
+
         val extractButton = findViewById<MaterialButton>(R.id.extractButton)
         extractButton.setOnClickListener {
             if (isExtracting) {
@@ -123,6 +142,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openCustomDestinationPicker() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Toast.makeText(this, getString(R.string.destination_tree_picker_downloads_notice), Toast.LENGTH_LONG).show()
+        }
+
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
@@ -148,6 +171,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun persistDestinationTreeUri(uri: Uri) {
         destinationPrefs.edit().putString(KEY_DESTINATION_TREE_URI, uri.toString()).apply()
+    }
+
+    private fun clearCustomDestinationSelection() {
+        selectedDestinationTreeUri = null
+        destinationPrefs.edit().remove(KEY_DESTINATION_TREE_URI).apply()
+    }
+
+    private fun isDownloadsRootTreeUri(treeUri: Uri): Boolean {
+        val treeDocumentId = runCatching { DocumentsContract.getTreeDocumentId(treeUri) }.getOrNull() ?: return false
+        val normalized = treeDocumentId.lowercase(Locale.US)
+
+        return normalized == DOWNLOADS_TREE_ID_PRIMARY
+            || normalized == DOWNLOADS_TREE_ID_PROVIDER
+            || normalized.endsWith(DOWNLOADS_TREE_ID_SUFFIX)
     }
 
     private fun showExtractionConfirmation(inputUri: Uri, outputName: String, destinationSummary: String) {
@@ -468,10 +505,13 @@ class MainActivity : AppCompatActivity() {
     private fun refreshDestinationLabels(overrideResolvedDestination: String? = null) {
         val outputDestinationLabel = findViewById<TextView>(R.id.outputDestinationLabel)
         val outputResolvedLabel = findViewById<TextView>(R.id.outputResolvedLabel)
+        val resetOutputDestinationButton = findViewById<MaterialButton>(R.id.resetOutputDestinationButton)
         val outputName = resolveRequestedOutputName().ifBlank { DEFAULT_OUTPUT_FILENAME }
 
+        val hasCustomDestination = selectedDestinationTreeUri != null
         val destinationLabel = selectedDestinationTreeUri?.toString() ?: getDefaultDestinationLabel()
         outputDestinationLabel.text = getString(R.string.output_destination_selected, destinationLabel)
+        resetOutputDestinationButton.visibility = if (hasCustomDestination) android.view.View.VISIBLE else android.view.View.GONE
 
         val resolved = overrideResolvedDestination ?: describePlannedDestination(outputName)
         outputResolvedLabel.text = getString(R.string.output_resolved_preview, resolved)
@@ -601,6 +641,7 @@ class MainActivity : AppCompatActivity() {
     private fun setUiEnabled(enabled: Boolean) {
         findViewById<MaterialButton>(R.id.selectInputButton).isEnabled = enabled
         findViewById<MaterialButton>(R.id.selectOutputDestinationButton).isEnabled = enabled
+        findViewById<MaterialButton>(R.id.resetOutputDestinationButton).isEnabled = enabled
         findViewById<MaterialButton>(R.id.extractButton).isEnabled = enabled
         findViewById<TextInputEditText>(R.id.outputFilenameEditText).isEnabled = enabled
     }
@@ -651,5 +692,8 @@ class MainActivity : AppCompatActivity() {
         const val OCTET_STREAM_MIME = "application/octet-stream"
         const val PREFS_NAME = "destination_preferences"
         const val KEY_DESTINATION_TREE_URI = "destination_tree_uri"
+        const val DOWNLOADS_TREE_ID_PRIMARY = "primary:download"
+        const val DOWNLOADS_TREE_ID_PROVIDER = "downloads"
+        const val DOWNLOADS_TREE_ID_SUFFIX = ":download"
     }
 }
