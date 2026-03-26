@@ -11,6 +11,8 @@
     <string name="output_destination_default_label">Public Downloads (default)</string>
     <string name="output_destination_app_specific_label">App-specific Downloads (default)</string>
     <string name="select_output_destination">Change destination</string>
+    <string name="reset_output_destination">Use Downloads</string>
+    <string name="destination_tree_reset_to_default">Destination reset to Downloads default.</string>
     <string name="extract">Extract</string>
     <string name="picker_sort_hint">Tip: Sorting is handled by your file provider (Files/Drive). Use the picker sort menu for Name / Last modified.</string>
     <string name="picker_sort_toast">Use picker sort menu for Name / Last modified.</string>
@@ -29,6 +31,9 @@
     <string name="output_resolved_preview_placeholder">Will extract to: (set filename)</string>
     <string name="destination_tree_selected">Custom folder selected.</string>
     <string name="destination_tree_selection_canceled">Destination change canceled.</string>
+    <string name="destination_tree_selection_canceled_downloads_hint">Destination change canceled. Android may block selecting Downloads directly; leave destination unchanged for Downloads, or pick/create a subfolder.</string>
+    <string name="destination_tree_downloads_root_blocked_hint">Android blocks selecting the Downloads root in folder picker. Leave destination unchanged to extract to Downloads, or choose/create a subfolder.</string>
+    <string name="destination_tree_picker_downloads_notice">Android may block selecting the Downloads root here. To keep using Downloads, leave destination unchanged; for custom output, choose/create a subfolder.</string>
     <string name="error_destination_tree_open_failed">Could not open destination picker.</string>
     <string name="error_destination_create_failed">Could not create output file in selected destination.</string>
     <string name="confirm_extract_title">Confirm output</string>
