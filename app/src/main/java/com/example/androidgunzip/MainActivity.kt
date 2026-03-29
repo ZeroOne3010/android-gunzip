@@ -292,11 +292,23 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomingIntent(incomingIntent: Intent?) {
-        if (incomingIntent?.action != Intent.ACTION_VIEW) {
+        if (incomingIntent == null) {
             return
         }
 
-        val incomingUri = incomingIntent.data
+        val incomingUri = when (incomingIntent.action) {
+            Intent.ACTION_VIEW -> incomingIntent.data
+            Intent.ACTION_SEND -> {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    incomingIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    incomingIntent.getParcelableExtra(Intent.EXTRA_STREAM)
+                }
+            }
+            else -> return
+        }
+
         if (incomingUri == null) {
             Toast.makeText(this, getString(R.string.error_opened_uri_missing), Toast.LENGTH_LONG).show()
             return
