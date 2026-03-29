@@ -292,11 +292,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleIncomingIntent(incomingIntent: Intent?) {
-        if (incomingIntent?.action != Intent.ACTION_VIEW) {
+        if (incomingIntent == null) {
             return
         }
 
-        val incomingUri = incomingIntent.data
+        val incomingUri = when (incomingIntent.action) {
+            Intent.ACTION_VIEW -> incomingIntent.data
+            Intent.ACTION_SEND -> resolveSharedStreamUri(incomingIntent)
+            else -> return
+        }
+
         if (incomingUri == null) {
             Toast.makeText(this, getString(R.string.error_opened_uri_missing), Toast.LENGTH_LONG).show()
             return
@@ -313,6 +318,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         validateAndSetInputFile(incomingUri)
+    }
+
+    private fun resolveSharedStreamUri(intent: Intent): Uri? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            (intent.extras?.get(Intent.EXTRA_STREAM) as? Uri)
+        }
     }
 
     private fun isSupportedViewUri(uri: Uri): Boolean {
