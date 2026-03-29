@@ -298,14 +298,7 @@ class MainActivity : AppCompatActivity() {
 
         val incomingUri = when (incomingIntent.action) {
             Intent.ACTION_VIEW -> incomingIntent.data
-            Intent.ACTION_SEND -> {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    incomingIntent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    incomingIntent.getParcelableExtra(Intent.EXTRA_STREAM)
-                }
-            }
+            Intent.ACTION_SEND -> resolveSharedStreamUri(incomingIntent)
             else -> return
         }
 
@@ -325,6 +318,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         validateAndSetInputFile(incomingUri)
+    }
+
+    private fun resolveSharedStreamUri(intent: Intent): Uri? {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            (intent.extras?.get(Intent.EXTRA_STREAM) as? Uri)
+        }
     }
 
     private fun isSupportedViewUri(uri: Uri): Boolean {
