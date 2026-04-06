@@ -5,6 +5,7 @@
     <string name="select_input_file">Select input file</string>
     <string name="validating_selected_file">Validating selected file…</string>
     <string name="selected_input_file">Input: %1$s</string>
+    <string name="selected_input_file_with_size">Input: %1$s (%2$s)</string>
     <string name="suggested_output_filename">Suggested output filename</string>
     <string name="default_output_filename">output.out</string>
     <string name="output_destination_default">Destination: Public Downloads (default)</string>

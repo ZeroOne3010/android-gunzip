@@ -373,6 +373,7 @@ class MainActivity : AppCompatActivity() {
 
         thread {
             val displayName = resolveDisplayName(uri)
+            val inputSizeBytes = resolveFileSizeBytes(uri)
             val isGzip = isGzipUri(uri)
 
             runOnUiThread {
@@ -392,10 +393,13 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, getString(R.string.warning_persist_permission_unavailable), Toast.LENGTH_SHORT).show()
                 }
 
-                inputButton.text = getString(
-                    R.string.selected_input_file,
-                    displayName ?: uri.lastPathSegment ?: uri.toString()
-                )
+                val selectedFileName = displayName ?: uri.lastPathSegment ?: uri.toString()
+                val selectedFileSize = formatInputSizeForDisplay(inputSizeBytes)
+                inputButton.text = if (selectedFileSize == null) {
+                    getString(R.string.selected_input_file, selectedFileName)
+                } else {
+                    getString(R.string.selected_input_file_with_size, selectedFileName, selectedFileSize)
+                }
 
                 val outputFilenameEditText = findViewById<TextInputEditText>(R.id.outputFilenameEditText)
                 val suggestedOutputName = suggestOutputFilename(displayName)
@@ -495,6 +499,33 @@ class MainActivity : AppCompatActivity() {
             if (cursor != null && cursor.moveToFirst()) {
                 val columnIndex = cursor.getColumnIndex(columnName)
                 if (columnIndex >= 0) cursor.getString(columnIndex) else null
+            } else {
+                null
+            }
+        } catch (_: Exception) {
+            null
+        } finally {
+            cursor?.close()
+        }
+    }
+
+    private fun resolveFileSizeBytes(uri: Uri): Long? {
+        val sizeFromDocumentContract = if (DocumentsContract.isDocumentUri(this, uri)) {
+            queryLongColumn(uri, DocumentsContract.Document.COLUMN_SIZE)
+        } else {
+            null
+        }
+
+        return sizeFromDocumentContract ?: queryLongColumn(uri, OpenableColumns.SIZE)
+    }
+
+    private fun queryLongColumn(uri: Uri, columnName: String): Long? {
+        var cursor: Cursor? = null
+        return try {
+            cursor = contentResolver.query(uri, arrayOf(columnName), null, null, null)
+            if (cursor != null && cursor.moveToFirst()) {
+                val columnIndex = cursor.getColumnIndex(columnName)
+                if (columnIndex >= 0 && !cursor.isNull(columnIndex)) cursor.getLong(columnIndex) else null
             } else {
                 null
             }
@@ -672,6 +703,20 @@ class MainActivity : AppCompatActivity() {
 
         val format = DecimalFormat("#,##0.#")
         return String.format(Locale.US, "%s %s", format.format(value), units[unitIndex])
+    }
+
+    private fun formatInputSizeForDisplay(sizeBytes: Long?): String? {
+        val bytes = sizeBytes ?: return null
+        if (bytes < 0) return null
+        if (bytes < 1024) return "$bytes bytes"
+
+        val kiloBytes = bytes / 1024.0
+        if (kiloBytes < 1024) {
+            return String.format(Locale.US, "%.1f KB", kiloBytes)
+        }
+
+        val megaBytes = kiloBytes / 1024.0
+        return String.format(Locale.US, "%.1f MB", megaBytes)
     }
 
     private sealed class ExtractionResult {
