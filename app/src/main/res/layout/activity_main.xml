@@ -32,12 +32,13 @@
             android:textColor="?attr/colorOnSurfaceVariant" />
 
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/mainCard"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             app:cardBackgroundColor="?attr/colorSurfaceContainer"
             app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true"
+            app:cardUseCompatPadding="false"
             app:strokeColor="?attr/colorOutlineVariant"
             app:strokeWidth="1dp">
 
@@ -47,34 +48,71 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/selectInputButton"
+                <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/select_input_file" />
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
+                    android:text="@string/section_input"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textStyle="bold" />
 
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="?attr/colorSurfaceContainer"
-            app:cardCornerRadius="20dp"
-            app:cardUseCompatPadding="true"
-            app:strokeColor="?attr/colorOutlineVariant"
-            app:strokeWidth="1dp">
+                <LinearLayout
+                    android:id="@+id/selectInputRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/row_outline_background"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="10dp">
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/input_icon_description"
+                        android:src="@android:drawable/ic_menu_save"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/inputFilenameText"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:text="@string/select_input_file"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                    <TextView
+                        android:id="@+id/inputSizeText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyMedium"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:text="@string/section_output"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textStyle="bold" />
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/outputFilenameLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
                     android:hint="@string/suggested_output_filename"
                     app:boxCornerRadiusBottomEnd="16dp"
                     app:boxCornerRadiusBottomStart="16dp"
@@ -90,45 +128,63 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
-                    android:id="@+id/outputDestinationLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:text="@string/output_destination_default"
-                    android:textAppearance="@style/TextAppearance.Material3.BodyMedium" />
+                    android:layout_marginTop="18dp"
+                    android:text="@string/section_destination"
+                    android:textAppearance="@style/TextAppearance.Material3.TitleMedium"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/selectOutputDestinationRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/row_outline_background"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:minHeight="56dp"
+                    android:orientation="horizontal"
+                    android:paddingStart="14dp"
+                    android:paddingTop="10dp"
+                    android:paddingEnd="14dp"
+                    android:paddingBottom="10dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/destination_icon_description"
+                        android:src="@android:drawable/ic_menu_agenda"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/outputDestinationLabel"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:contentDescription="@string/change_destination"
+                        android:src="@android:drawable/ic_media_next"
+                        android:tint="?attr/colorOnSurfaceVariant" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/outputResolvedLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="10dp"
                     android:text="@string/output_resolved_preview_placeholder"
                     android:textAppearance="@style/TextAppearance.Material3.BodySmall"
                     android:textColor="?attr/colorOnSurfaceVariant" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/selectOutputDestinationButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/select_output_destination" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/resetOutputDestinationButton"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="@string/reset_output_destination"
-                        android:visibility="gone" />
-                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 

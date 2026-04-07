@@ -12,6 +12,8 @@ import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.provider.OpenableColumns
+import android.view.View
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -92,21 +94,14 @@ class MainActivity : AppCompatActivity() {
             refreshDestinationLabels()
         }
 
-        val selectInputButton = findViewById<MaterialButton>(R.id.selectInputButton)
-        selectInputButton.setOnClickListener {
+        val selectInputRow = findViewById<LinearLayout>(R.id.selectInputRow)
+        selectInputRow.setOnClickListener {
             openDocumentLauncher.launch(arrayOf("*/*"))
         }
 
-        val selectOutputDestinationButton = findViewById<MaterialButton>(R.id.selectOutputDestinationButton)
-        selectOutputDestinationButton.setOnClickListener {
+        val selectOutputDestinationRow = findViewById<LinearLayout>(R.id.selectOutputDestinationRow)
+        selectOutputDestinationRow.setOnClickListener {
             openCustomDestinationPicker()
-        }
-
-        val resetOutputDestinationButton = findViewById<MaterialButton>(R.id.resetOutputDestinationButton)
-        resetOutputDestinationButton.setOnClickListener {
-            clearCustomDestinationSelection()
-            Toast.makeText(this, getString(R.string.destination_tree_reset_to_default), Toast.LENGTH_SHORT).show()
-            refreshDestinationLabels()
         }
 
         val extractButton = findViewById<MaterialButton>(R.id.extractButton)
@@ -367,9 +362,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun validateAndSetInputFile(uri: Uri) {
-        val inputButton = findViewById<MaterialButton>(R.id.selectInputButton)
-        inputButton.isEnabled = false
-        inputButton.text = getString(R.string.validating_selected_file)
+        val inputRow = findViewById<LinearLayout>(R.id.selectInputRow)
+        val inputFilenameText = findViewById<TextView>(R.id.inputFilenameText)
+        val inputSizeText = findViewById<TextView>(R.id.inputSizeText)
+        inputRow.isEnabled = false
+        inputFilenameText.text = getString(R.string.validating_selected_file)
+        inputSizeText.visibility = View.GONE
 
         thread {
             val displayName = resolveDisplayName(uri)
@@ -377,11 +375,12 @@ class MainActivity : AppCompatActivity() {
             val isGzip = isGzipUri(uri)
 
             runOnUiThread {
-                inputButton.isEnabled = true
+                inputRow.isEnabled = true
 
                 if (!isGzip) {
                     selectedInputUri = null
-                    inputButton.text = getString(R.string.select_input_file)
+                    inputFilenameText.text = getString(R.string.select_input_file)
+                    inputSizeText.visibility = View.GONE
                     Toast.makeText(this, getString(R.string.error_not_gzip_file), Toast.LENGTH_LONG).show()
                     return@runOnUiThread
                 }
@@ -395,10 +394,12 @@ class MainActivity : AppCompatActivity() {
 
                 val selectedFileName = displayName ?: uri.lastPathSegment ?: uri.toString()
                 val selectedFileSize = formatInputSizeForDisplay(inputSizeBytes)
-                inputButton.text = if (selectedFileSize == null) {
-                    getString(R.string.selected_input_file, selectedFileName)
+                inputFilenameText.text = selectedFileName
+                if (selectedFileSize == null) {
+                    inputSizeText.visibility = View.GONE
                 } else {
-                    getString(R.string.selected_input_file_with_size, selectedFileName, selectedFileSize)
+                    inputSizeText.visibility = View.VISIBLE
+                    inputSizeText.text = selectedFileSize
                 }
 
                 val outputFilenameEditText = findViewById<TextInputEditText>(R.id.outputFilenameEditText)
@@ -549,13 +550,10 @@ class MainActivity : AppCompatActivity() {
     private fun refreshDestinationLabels(overrideResolvedDestination: String? = null) {
         val outputDestinationLabel = findViewById<TextView>(R.id.outputDestinationLabel)
         val outputResolvedLabel = findViewById<TextView>(R.id.outputResolvedLabel)
-        val resetOutputDestinationButton = findViewById<MaterialButton>(R.id.resetOutputDestinationButton)
         val outputName = resolveRequestedOutputName().ifBlank { DEFAULT_OUTPUT_FILENAME }
 
-        val hasCustomDestination = selectedDestinationTreeUri != null
         val destinationLabel = selectedDestinationTreeUri?.toString() ?: getDefaultDestinationLabel()
         outputDestinationLabel.text = getString(R.string.output_destination_selected, destinationLabel)
-        resetOutputDestinationButton.visibility = if (hasCustomDestination) android.view.View.VISIBLE else android.view.View.GONE
 
         val resolved = overrideResolvedDestination ?: describePlannedDestination(outputName)
         outputResolvedLabel.text = getString(R.string.output_resolved_preview, resolved)
@@ -683,9 +681,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setUiEnabled(enabled: Boolean) {
-        findViewById<MaterialButton>(R.id.selectInputButton).isEnabled = enabled
-        findViewById<MaterialButton>(R.id.selectOutputDestinationButton).isEnabled = enabled
-        findViewById<MaterialButton>(R.id.resetOutputDestinationButton).isEnabled = enabled
+        findViewById<LinearLayout>(R.id.selectInputRow).isEnabled = enabled
+        findViewById<LinearLayout>(R.id.selectOutputDestinationRow).isEnabled = enabled
         findViewById<MaterialButton>(R.id.extractButton).isEnabled = enabled
         findViewById<TextInputEditText>(R.id.outputFilenameEditText).isEnabled = enabled
     }
