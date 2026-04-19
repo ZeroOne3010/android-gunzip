@@ -104,6 +104,13 @@ class MainActivity : AppCompatActivity() {
             openCustomDestinationPicker()
         }
 
+        val resetOutputDestinationButton = findViewById<MaterialButton>(R.id.resetOutputDestinationButton)
+        resetOutputDestinationButton.setOnClickListener {
+            clearCustomDestinationSelection()
+            Toast.makeText(this, getString(R.string.destination_tree_reset_to_default), Toast.LENGTH_SHORT).show()
+            refreshDestinationLabels()
+        }
+
         val extractButton = findViewById<MaterialButton>(R.id.extractButton)
         extractButton.setOnClickListener {
             if (isExtracting) {
@@ -550,10 +557,15 @@ class MainActivity : AppCompatActivity() {
     private fun refreshDestinationLabels(overrideResolvedDestination: String? = null) {
         val outputDestinationLabel = findViewById<TextView>(R.id.outputDestinationLabel)
         val outputResolvedLabel = findViewById<TextView>(R.id.outputResolvedLabel)
+        val resetOutputDestinationButton = findViewById<MaterialButton>(R.id.resetOutputDestinationButton)
+        val destinationChevron = findViewById<View>(R.id.destinationChevron)
         val outputName = resolveRequestedOutputName().ifBlank { DEFAULT_OUTPUT_FILENAME }
 
+        val hasCustomDestination = selectedDestinationTreeUri != null
         val destinationLabel = selectedDestinationTreeUri?.toString() ?: getDefaultDestinationLabel()
         outputDestinationLabel.text = getString(R.string.output_destination_selected, destinationLabel)
+        resetOutputDestinationButton.visibility = if (hasCustomDestination) View.VISIBLE else View.GONE
+        destinationChevron.visibility = if (hasCustomDestination) View.GONE else View.VISIBLE
 
         val resolved = overrideResolvedDestination ?: describePlannedDestination(outputName)
         outputResolvedLabel.text = getString(R.string.output_resolved_preview, resolved)
@@ -683,6 +695,7 @@ class MainActivity : AppCompatActivity() {
     private fun setUiEnabled(enabled: Boolean) {
         findViewById<LinearLayout>(R.id.selectInputRow).isEnabled = enabled
         findViewById<LinearLayout>(R.id.selectOutputDestinationRow).isEnabled = enabled
+        findViewById<MaterialButton>(R.id.resetOutputDestinationButton).isEnabled = enabled
         findViewById<MaterialButton>(R.id.extractButton).isEnabled = enabled
         findViewById<TextInputEditText>(R.id.outputFilenameEditText).isEnabled = enabled
     }

@@ -14,9 +14,11 @@
     <string name="selected_input_file_with_size">Input: %1$s (%2$s)</string>
     <string name="suggested_output_filename">Suggested output filename</string>
     <string name="default_output_filename">output.out</string>
-        <string name="output_destination_default_label">Public Downloads</string>
+    <string name="output_destination_default_label">Public Downloads</string>
     <string name="output_destination_app_specific_label">App Downloads</string>
-        <string name="extract">Extract</string>
+    <string name="reset_output_destination">Reset</string>
+    <string name="destination_tree_reset_to_default">Destination reset to Downloads.</string>
+    <string name="extract">Extract</string>
     <string name="error_not_gzip_file">The selected file is not gzip-compressed (missing header bytes 1F 8B).</string>
     <string name="warning_persist_permission_unavailable">Could not keep long-term access permission for this file.</string>
     <string name="error_select_input_first">Select an input gzip file first.</string>

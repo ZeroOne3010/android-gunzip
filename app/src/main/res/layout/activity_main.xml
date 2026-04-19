@@ -169,7 +169,20 @@
                         android:maxLines="1"
                         android:textAppearance="@style/TextAppearance.Material3.BodyLarge" />
 
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/resetOutputDestinationButton"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:minWidth="0dp"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp"
+                        android:text="@string/reset_output_destination"
+                        android:visibility="gone" />
+
                     <ImageView
+                        android:id="@+id/destinationChevron"
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:contentDescription="@string/change_destination"
